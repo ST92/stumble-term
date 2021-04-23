@@ -1,35 +1,17 @@
-use std::time::Instant;
 use std::io;
+use std::time::Instant;
 
 use std::sync::mpsc::channel;
 use std::thread;
 
 use glutin::{
-    event::{
-        Event,
-        WindowEvent,
-        KeyboardInput,
-        VirtualKeyCode,
-        ElementState
-    },
-    event_loop::{
-        ControlFlow,
-        EventLoop,
-    },
+    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
     ContextBuilder,
 };
 
-use femtovg::{
-    renderer::OpenGl,
-    Align,
-    Baseline,
-    Canvas,
-    Color,
-    Paint,
-    Path,
-    Renderer,
-};
+use femtovg::{renderer::OpenGl, Align, Baseline, Canvas, Color, Paint, Path, Renderer};
 
 fn main() {
     let window_size = glutin::dpi::PhysicalSize::new(1000, 670);
@@ -42,7 +24,8 @@ fn main() {
     let windowed_context = ContextBuilder::new().build_windowed(wb, &el).unwrap();
     let windowed_context = unsafe { windowed_context.make_current().unwrap() };
 
-    let renderer = OpenGl::new(|s| windowed_context.get_proc_address(s) as *const _).expect("Cannot create renderer");
+    let renderer = OpenGl::new(|s| windowed_context.get_proc_address(s) as *const _)
+        .expect("Cannot create renderer");
     let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
     canvas.set_size(
         window_size.width as u32,
@@ -51,7 +34,7 @@ fn main() {
     );
     canvas
         .add_font("/home/rne/Pobrane/cataclysmdda-0.D/data/font/fixedsys.ttf")
-        .expect("Cannot add font"); 
+        .expect("Cannot add font");
 
     let start = Instant::now();
     let mut prevt = start;
@@ -61,15 +44,15 @@ fn main() {
     let (sender, reciever) = channel();
 
     let mut input_text = String::new();
-    let mut line_starts : Vec<usize> = vec![0];
-    
-    thread::spawn(move|| {
+    let mut line_starts: Vec<usize> = vec![0];
+
+    thread::spawn(move || {
         let input = io::stdin();
         loop {
             let mut buffer = String::new();
             match input.read_line(&mut buffer) {
                 Ok(_n) => sender.send(buffer).unwrap_or(()),
-                Err(_) => break
+                Err(_) => break,
             }
         }
     });
@@ -92,14 +75,20 @@ fn main() {
                             ..
                         },
                     ..
-                } => *control_flow = ControlFlow::Exit,  
+                } => *control_flow = ControlFlow::Exit,
                 _ => (),
             },
             Event::RedrawRequested(_) => {
                 let dpi_factor = windowed_context.window().scale_factor();
                 let size = windowed_context.window().inner_size();
                 canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-                canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgbf(0.9, 0.9, 0.9));
+                canvas.clear_rect(
+                    0,
+                    0,
+                    size.width as u32,
+                    size.height as u32,
+                    Color::rgbf(0.9, 0.9, 0.9),
+                );
 
                 let now = Instant::now();
                 let dt = (now - prevt).as_secs_f32();
@@ -110,7 +99,7 @@ fn main() {
                 match reciever.try_recv() {
                     Ok(line) => {
                         line_starts.push(input_text.len());
-                        if line_starts.len()>200 {
+                        if line_starts.len() > 200 {
                             line_starts.remove(0);
                             line_starts.remove(0);
                             line_starts.remove(0);
@@ -123,8 +112,8 @@ fn main() {
                             line_starts.remove(0);
                         }
                         input_text.push_str(&line);
-                    },
-                    Err(_) => ()
+                    }
+                    Err(_) => (),
                 }
 
                 draw_stuff(&mut canvas, &input_text, &line_starts);
@@ -145,17 +134,17 @@ fn main() {
 
 fn draw_stuff<T: Renderer>(canvas: &mut Canvas<T>, text: &String, line_starts: &Vec<usize>) {
     let mut text_paint = Paint::color(Color::black());
-        text_paint.set_font_size(14.0);
+    text_paint.set_font_size(14.0);
 
     canvas.save();
 
-    let display_line_start : usize = if line_starts.len() < 10 {
+    let display_line_start: usize = if line_starts.len() < 10 {
         line_starts[0]
     } else {
-        line_starts[line_starts.len()-10]
+        line_starts[line_starts.len() - 10]
     };
     let text = text.get(display_line_start..).unwrap();
-    
+
     canvas.translate(0.0, 50.0);
     for line in text.split("\n") {
         let _ = canvas.fill_text(0.0, 0.0, line, text_paint);
@@ -228,6 +217,11 @@ impl PerfGraph {
         text_paint.set_font_size(12.0);
         text_paint.set_text_align(Align::Right);
         text_paint.set_text_baseline(Baseline::Alphabetic);
-        let _ = canvas.fill_text(x + w - 5.0, y + h - 5.0, &format!("{:.2} ms", avg * 1000.0), text_paint);
+        let _ = canvas.fill_text(
+            x + w - 5.0,
+            y + h - 5.0,
+            &format!("{:.2} ms", avg * 1000.0),
+            text_paint,
+        );
     }
 }
