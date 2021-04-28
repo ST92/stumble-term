@@ -40,6 +40,7 @@ fn main() {
     let mut prevt = start;
 
     let mut perf = PerfGraph::new();
+    let mut perf_shown = false;
 
     let (sender, reciever) = channel();
 
@@ -70,13 +71,23 @@ fn main() {
                 WindowEvent::KeyboardInput {
                     input:
                         KeyboardInput {
-                            virtual_keycode: Some(VirtualKeyCode::Q),
                             state: ElementState::Pressed,
+                            virtual_keycode: Some(VirtualKeyCode::Q),
                             ..
                         },
                     ..
                 } => *control_flow = ControlFlow::Exit,
-                _ => (),
+
+                WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            state: ElementState::Pressed,
+                            virtual_keycode: Some(VirtualKeyCode::F3),
+                            ..
+                        },
+                    ..
+                } => perf_shown = !perf_shown,
+                _ => {}
             },
             Event::RedrawRequested(_) => {
                 let dpi_factor = windowed_context.window().scale_factor();
@@ -97,31 +108,29 @@ fn main() {
                 perf.update(dt);
 
                 match reciever.try_recv() {
-                    Ok(line) => {
+                    Ok(line) if line.len() > 0 => {
                         line_starts.push(input_text.len());
                         if line_starts.len() > 200 {
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
-                            line_starts.remove(0);
+                            for _ in 1..=10 {
+                                line_starts.remove(0);
+                            }
                         }
+
+                        let line = ">".to_string() + &line;
                         input_text.push_str(&line);
                     }
                     Err(_) => (),
+                    _ => {}
                 }
 
                 draw_stuff(&mut canvas, &input_text, &line_starts);
 
-                canvas.save();
-                canvas.reset();
-                perf.render(&mut canvas, 5.0, 5.0);
-                canvas.restore();
+                if perf_shown {
+                    canvas.save();
+                    canvas.reset();
+                    perf.render(&mut canvas, 5.0, 5.0);
+                    canvas.restore();
+                }
 
                 canvas.flush();
                 windowed_context.swap_buffers().unwrap();
@@ -135,13 +144,14 @@ fn main() {
 fn draw_stuff<T: Renderer>(canvas: &mut Canvas<T>, text: &String, line_starts: &Vec<usize>) {
     let mut text_paint = Paint::color(Color::black());
     text_paint.set_font_size(14.0);
-
     canvas.save();
 
-    let display_line_start: usize = if line_starts.len() < 10 {
+    let displayed_lines = 60;
+
+    let display_line_start: usize = if line_starts.len() < displayed_lines {
         line_starts[0]
     } else {
-        line_starts[line_starts.len() - 10]
+        line_starts[line_starts.len() - displayed_lines]
     };
     let text = text.get(display_line_start..).unwrap();
 
