@@ -13,13 +13,34 @@ use glutin::{
 
 use femtovg::{renderer::OpenGl, Align, Baseline, Canvas, Color, Paint, Path, Renderer};
 
+struct StartupSettings {
+    physical_size: glutin::dpi::PhysicalSize<i32>,
+    title: String,
+    default_font: String,
+
+}
+
+
+impl Default for StartupSettings {
+    fn default() -> Self {
+        Self {
+            physical_size: glutin::dpi::PhysicalSize::new(1000, 670),
+            title: String::from("Background task info"),
+            /// a fixed font is used everywhere for simplicity
+            default_font: String::from("/home/rne/Pobrane/cataclysmdda-0.D/data/font/fixedsys.ttf"),
+        }
+    }
+}
+
 fn main() {
-    let window_size = glutin::dpi::PhysicalSize::new(1000, 670);
+    let mut settings = StartupSettings::default();
+
     let el = EventLoop::new();
+
     let wb = WindowBuilder::new()
-        .with_inner_size(window_size)
+        .with_inner_size(settings.physical_size)
         .with_resizable(false)
-        .with_title("Gradient test");
+        .with_title(settings.title);
 
     let windowed_context = ContextBuilder::new().build_windowed(wb, &el).unwrap();
     let windowed_context = unsafe { windowed_context.make_current().unwrap() };
@@ -28,12 +49,12 @@ fn main() {
         .expect("Cannot create renderer");
     let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
     canvas.set_size(
-        window_size.width as u32,
-        window_size.height as u32,
+        settings.physical_size.width as u32,
+        settings.physical_size.height as u32,
         windowed_context.window().scale_factor() as f32,
     );
     canvas
-        .add_font("/home/rne/Pobrane/cataclysmdda-0.D/data/font/fixedsys.ttf")
+        .add_font(settings.default_font)
         .expect("Cannot add font");
 
     let start = Instant::now();
