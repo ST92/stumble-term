@@ -28,7 +28,7 @@ impl Default for StartupSettings {
             physical_size: glutin::dpi::PhysicalSize::new(1000, 670),
             title: String::from("Background task info"),
             /// a fixed font is used everywhere for simplicity
-            default_font: String::from("/home/rne/Pobrane/cataclysmdda-0.D/data/font/fixedsys.ttf"),
+            default_font: String::from("fixedsys.ttf"),
         }                                          
     }                                              
 }                                                  
