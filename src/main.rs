@@ -34,14 +34,13 @@ impl Default for StartupSettings {
 }                                                  
                                                    
 fn main() {                                        
-    let mut settings = StartupSettings::default(); 
-
+    let mut settings = StartupSettings::default();
     
     let l1size = cache_size::l1_cache_size().unwrap_or(0);
     let l2size = cache_size::l2_cache_size().unwrap_or(0);
     let l3size = cache_size::l3_cache_size().unwrap_or(0);
 
-    let cache_description = format!("# L1: {}, L2: {}, L3: {}", l1size, l2size, l3size);
+    let cache_description = format!("# L1: {}k, L2: {}k, L3: {}k", l1size/1024, l2size/1024, l3size/1024);
 
     settings.title += &cache_description[..];
                                                    
